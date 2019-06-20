@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Chat PHP</title>
+</head>
+<body>
+    <ul id="messages"></ul>
+    <form onsubmit="sendMessage(event)">
+        <input type="text" required id="message_text">
+        <button type="submit">Enviar</button>
+    </form>
+    <script>
+        const conn = new WebSocket('ws://192.168.1.6:8100');
+        const messages_list = document.querySelector('#messages');
+        function sendMessage(ev){
+            ev.preventDefault();
+            const message = document.querySelector('#message_text').value;
+            conn.send(message);
+            document.querySelector('#message_text').value = '';
+            return false;
+        }
+        conn.onmessage = function(message){
+            console.log(message);
+            messages_list.innerHTML += `<li>${message.data}</li>`;
+        }
+    </script>
+</body>
+</html>
