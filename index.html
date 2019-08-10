@@ -13,8 +13,14 @@
         <button type="submit">Enviar</button>
     </form>
     <script>
-        const conn = new WebSocket('ws://192.168.1.6:8100');
+
+        let conn;
+        const wsConectionStr = "-- web socket connection string here --";
+        const maxAttempConnection = 10;
+        let attemptConnection = 1;
+
         const messages_list = document.querySelector('#messages');
+
         function sendMessage(ev){
             ev.preventDefault();
             const message = document.querySelector('#message_text').value;
@@ -22,10 +28,41 @@
             document.querySelector('#message_text').value = '';
             return false;
         }
-        conn.onmessage = function(message){
-            console.log(message);
-            messages_list.innerHTML += `<li>${message.data}</li>`;
+
+
+        function connect() {
+            conn = new WebSocket(wsConectionStr);
+            return new Promise((resolve, reject) => {
+                conn.onerror = reject;
+                conn.onopen = resolve;
+            });
         }
+
+        function addOnMessage() {
+            conn.onmessage = function(message){
+                console.log(message);
+                messages_list.innerHTML += `<li>${message.data}</li>`;
+            }
+        }
+
+        function tryConnect() {
+            console.log('tring connect... conection attempt:', attemptConnection);
+            connect().then(() => {
+                attemptConnection = 0;
+                addOnMessage();
+                addOnClose();
+            }, () => {
+                if( attemptConnection >= maxAttempConnection ) return;
+                tryConnect();
+                attemptConnection++;
+            });
+        }
+        function addOnClose(){
+            conn.onclose = tryConnect;
+        }
+
+        tryConnect();
+
     </script>
 </body>
 </html>
